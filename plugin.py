@@ -71,15 +71,14 @@ class MegaHAL(callbacks.Plugin):
         text = text.strip()
         return text
 
-    def _learn(self, irc, channel, text):
+    def _learn(self, irc, channel, text, probability):
         text = self._cleanText(text)
         if text:
-            if len(text) > 1 and not text.isspace():
+            if len(text) > 0 and not text.isspace():
                 b = Brain(self._brainfile)
                 b.learn(text)
         # determine probability to respond.
-        prb = self.registryValue('probability', channel)
-        if random.randint(0, 100) < prb:
+        if random.randint(0, 100) < probability:
             # if we've randomly determined to talk, check the update time.
             sentinel = self._updateSentinel(channel)
             if sentinel:
@@ -89,34 +88,39 @@ class MegaHAL(callbacks.Plugin):
         self.log.info("Trying to respond in %s" % channel)
         b = Brain(self._brainfile)
         response = b.reply(text).encode('utf-8')
+        # delay the response here so we look real?
         irc.queueMsg(ircmsgs.privmsg(channel, response))
 
     def doPrivmsg(self, irc, msg):
         channel = msg.args[0].lower()
         text = msg.args[1].strip()
-        # ignore if we're addressed, ctcp, action and only messages in a channel.
+        # ignore ctcp, action and only messages in a channel.
         # if txt.startswith(conf.supybot.reply.whenAddressedBy.chars()):
-        if ircmsgs.isCtcp(msg) or ircmsgs.isAction(msg) or not irc.isChannel(channel) or callbacks.addressed(irc.nick, msg):
-            return
-        # check if we're ignoring specific channels.
-        ignoreChannels = self.registryValue('ignoreChannels').split(',').lower()
-        if channel in ignoreChannels: # irc.state.channels.
+        if ircmsgs.isCtcp(msg) or ircmsgs.isAction(msg) or not irc.isChannel(channel):
             return
         # on to the text. check if we're ignoring the text matching regex here.
         if re.match(self.registryValue('ignoreRegex'), text):
             return
-        # should we strip urls?
+        # should we strip urls from text?
         if self.registryValue('stripUrls'):
             text = re.sub('(http[^\s]*)', '', text)
+        # determine probability if addressed or not.
+        if callbacks.addressed(irc.nick, msg):
+            text = re.sub('(' + irc.nick + '*?\W+)', '', text)
+            probability = self.registryValue('probabilityWhenAddressed', channel)
+        else:
+            probability = self.registryValue('probability', channel)
         # finally, pass to our learn function.
-        self._learn(irc, channel, text)
+        self._learn(irc, channel, text, probability)
 
     def corpuslearn(self, irc, msg, args, text):
         text = self._cleanText(text)
-        if text:
-            if len(text) > 1 and not text.isspace():
-                b = Brain(self._brainfile)
-                b.learn(text)
+        if text and len(text) > 1 and not text.isspace():
+            irc.reply("I am learning: {0}".format(text))
+            b = Brain(self._brainfile)
+            b.learn(text)
+        else:
+            irc.reply("After sanitizing, I did not have any text to learn.")
     corpuslearn = wrap(corpuslearn, [('checkCapability', 'admin'), ('text')])
 
     def corpusreply(self, irc, msg, args, text):
