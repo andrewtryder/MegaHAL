@@ -39,3 +39,4 @@ Inspiration/notes:
     * https://github.com/gsf/supybot-plugins/blob/1ccef4a72411bd14fb3115c520de1c002be8cbce/Supybot-plugins-20060723/Markov/plugin.py
     * https://github.com/bdrewery/PyBorg/blob/master/lib/pyborg/pyborg.py
     * https://github.com/Trixarian/Alia/blob/master/pyborg.py
+    * http://git.jamessan.com/?p=Supybot/Markov.git

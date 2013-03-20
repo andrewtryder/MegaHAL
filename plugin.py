@@ -10,6 +10,7 @@ import time
 import re
 import random
 import os
+import chardet
 # extra supybot
 import supybot.ircmsgs as ircmsgs
 import supybot.conf as conf
@@ -63,19 +64,34 @@ class MegaHAL(callbacks.Plugin):
                 self.log.debug("I spoke less than {0} ago in {1}".format(lastreplied, channel))
                 return False
 
+    def _decode_irc(self, raw, preferred_encs = ["UTF-8", "CP1252", "ISO-8859-1"]):
+        """Taken from here: http://bit.ly/1681r2i """
+
+        changed = False
+        for enc in preferred_encs:
+            try:
+                res = raw.decode(enc)
+                changed = True
+                break
+            except:
+                pass
+        if not changed:
+            try:
+                enc = chardet.detect(raw)['encoding']
+                res = raw.decode(enc)
+            except:
+                res = raw.decode(enc, 'ignore')
+        return res
+
     def _cleantext(self, text):
         """Clean-up text for input into corpus."""
-        text = text.decode("utf-8", 'ignore')
+
+        text = self._decode_irc(text)
         text = ircutils.stripFormatting(text)
         text = text.strip()
         text = re.sub("[^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@.!?;:/%\$§\-_ ]", " ", text)
         text = utils.str.normalizeWhitespace(text)
         return text
-
-    def removeNonAscii(self, s):
-        """Remove non-ascii characters."""
-
-        return "" . join(filter(lambda x: ord(x)<128, s))
 
     def _learn(self, irc, channel, text, probability):
         text = self._cleantext(text)
