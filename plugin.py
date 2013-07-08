@@ -166,6 +166,11 @@ class MegaHAL(callbacks.Plugin):
     corpussize = wrap(corpussize)
 
     def corpuslearn(self, irc, msg, args, text):
+        """<text>
+
+        Manually teach the corpus <text>
+        """
+
         text = self._cleantext(text)
         if text and len(text) > 1 and not text.isspace():
             irc.reply("I am learning: {0}".format(text))
@@ -176,6 +181,11 @@ class MegaHAL(callbacks.Plugin):
     corpuslearn = wrap(corpuslearn, [('checkCapability', 'admin'), ('text')])
 
     def corpusreply(self, irc, msg, args, text):
+        """<text>
+
+        Manually have the brain reply to <text>
+        """
+        
         b = Brain(self._brainfile)
         response = b.reply(text).encode('utf-8')
         irc.reply(response)
