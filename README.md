@@ -1,3 +1,9 @@
+NOTE: I found a user who took my work and made it into a much better plugin. It's available at:
+
+https://github.com/waratte/supybot/tree/master/Cobe
+
+I highly suggest you use his. Mine will remain up here as archived code only. Do not expect updates.
+
 Supybot-MegaHAL
 ===============
 
